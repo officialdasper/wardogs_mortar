@@ -59,8 +59,12 @@
   .btn:hover { border-color:var(--khaki); }
   .btn.main { background:var(--amber); color:#16180f; border-color:var(--amber); }
 
-  .result { display:grid; grid-template-columns:230px 1fr; gap:18px; align-items:center; }
-  .order { display:flex; flex-direction:column; gap:14px; }
+  .result { display:flex; flex-direction:column; gap:14px; }
+  .scopewrap { text-align:center; }
+  .scope { width:100%; max-width:480px; display:block; margin:0 auto; }
+  .scopecap { color:var(--muted); font-size:13px; margin-top:4px; }
+  .order { display:grid; grid-template-columns:1fr 1fr; gap:14px; }
+  .order .status { grid-column:1 / -1; }
   .order .lbl { color:var(--muted); font-size:14px; text-transform:uppercase; font-weight:700; }
   .order .val { font-size:52px; line-height:1; color:var(--amber); }
   .order .val small { font-size:24px; color:var(--khaki); margin-left:4px; }
@@ -83,8 +87,7 @@
   details label { display:flex; gap:8px; align-items:center; margin-top:8px; }
 
   @media (max-width:620px) {
-    .inputs, .result { grid-template-columns:1fr; }
-    .compass { max-width:240px; margin:0 auto; }
+    .inputs, .order { grid-template-columns:1fr; }
     .order .val { font-size:44px; }
   }
 </style>
@@ -131,7 +134,10 @@
   <section class="step">
     <h2 class="stencil"><span class="num">2</span> <span data-i18n="s2"></span></h2>
     <div class="result">
-      <svg class="compass" id="compass" viewBox="0 0 220 220"></svg>
+      <div class="scopewrap">
+        <svg class="scope" id="scope" viewBox="0 0 440 300"></svg>
+        <div class="scopecap" data-i18n="scopeCap"></div>
+      </div>
       <div class="order">
         <div>
           <div class="lbl" data-i18n="turnLbl"></div>
@@ -177,8 +183,9 @@ const I18N = {
     me: 'Где стоит миномёт (я)', target: 'Куда стрелять (цель)',
     newTarget: 'Новая цель', swap: 'Поменять местами',
     s2: 'Наводи вот так',
-    turnLbl: '↻ Повернись на (компас сверху экрана)',
-    rangeLbl: '↕ Дальность (W / S или мышкой)',
+    turnLbl: '↔ Курс (лента сверху прицела)',
+    rangeLbl: '↕ Дальность RNG (W / S или мышкой)',
+    scopeCap: 'Так должно быть в прицеле: жёлтая метка по центру ленты сверху и на шкале RNG слева',
     s3: 'Огонь!',
     s3hint: 'Стреляй и смотри куда упало. Недолёт — добавь метров. Перелёт — убавь. Ушло вбок — подкрути поворот на пару градусов.',
     histTitle: 'Прошлые цели', histHint: '(нажми, чтобы вернуть)',
@@ -190,7 +197,6 @@ const I18N = {
     needBoth: 'Вбей обе точки',
     m: 'м', dirWord: 'Направление',
     dirs: ['С (север)','СВ','В (восток)','ЮВ','Ю (юг)','ЮЗ','З (запад)','СЗ'],
-    cardinal: ['С','В','Ю','З'],
     tooFar: (w, max, d) => `✖ Слишком далеко! ${w} бьёт максимум на ${max} м. Подойди ближе на ${d} м.`,
     tooClose: (min, d) => `✖ Слишком близко! Минимум ${min} м. Отойди на ${d} м.`,
     ok: (b, d) => `✔ Достаёт. Поверни на ${b}°, выставь ${d} м и стреляй.`,
@@ -202,8 +208,9 @@ const I18N = {
     me: 'Where the mortar is (me)', target: 'Where to shoot (target)',
     newTarget: 'New target', swap: 'Swap',
     s2: 'Aim like this',
-    turnLbl: '↻ Turn to (compass at top of screen)',
-    rangeLbl: '↕ Range (W / S or mouse)',
+    turnLbl: '↔ Heading (tape at top of the sight)',
+    rangeLbl: '↕ Range RNG (W / S or mouse)',
+    scopeCap: 'This is how the sight should look: yellow mark centered on the top tape and on the RNG scale on the left',
     s3: 'Fire!',
     s3hint: 'Shoot and watch where it lands. Short — add meters. Long — take some off. Off to the side — nudge the heading a couple of degrees.',
     histTitle: 'Previous targets', histHint: '(click to restore)',
@@ -215,7 +222,6 @@ const I18N = {
     needBoth: 'Enter both points',
     m: 'm', dirWord: 'Direction',
     dirs: ['N (north)','NE','E (east)','SE','S (south)','SW','W (west)','NW'],
-    cardinal: ['N','E','S','W'],
     tooFar: (w, max, d) => `✖ Too far! ${w} maxes out at ${max} m. Move ${d} m closer.`,
     tooClose: (min, d) => `✖ Too close! Minimum is ${min} m. Back off ${d} m.`,
     ok: (b, d) => `✔ In range. Turn to ${b}°, set ${d} m and fire.`,
@@ -241,7 +247,7 @@ const T = () => I18N[lang];
 function applyLang() {
   document.documentElement.lang = lang;
   document.querySelectorAll('[data-i18n]').forEach(el => { el.innerHTML = T()[el.dataset.i18n]; });
-  $('compass').setAttribute('aria-label', lang === 'ru' ? 'Компас' : 'Compass');
+  $('scope').setAttribute('aria-label', lang === 'ru' ? 'Прицел' : 'Sight');
   document.querySelectorAll('#langs button').forEach(b => b.classList.toggle('on', b.dataset.l === lang));
   calc(); renderHist();
 }
@@ -286,7 +292,7 @@ function calc() {
     $('brg').textContent = '—'; $('dist').innerHTML = '—';
     $('brgSub').innerHTML = '&nbsp;'; $('mark').style.display = 'none';
     $('status').className = 'status ok'; $('status').textContent = L.needBoth;
-    drawCompass(null); return;
+    drawScope(null); return;
   }
   const mul = parseFloat($('mul').value) || 100;
   const dx = B.x - A.x;
@@ -307,31 +313,60 @@ function calc() {
   if (dist > W.max) { st.className = 'status warn'; st.textContent = L.tooFar(L[W.key], W.max, Math.ceil(dist - W.max)); }
   else if (dist < W.min) { st.className = 'status warn'; st.textContent = L.tooClose(W.min, Math.ceil(W.min - dist)); }
   else { st.className = 'status ok'; st.textContent = L.ok(rb, rd); }
-  drawCompass(brg);
+  drawScope(brg, dist, dist > W.max || dist < W.min);
 }
 
-function drawCompass(brg) {
-  const cx = 110, cy = 110, r = 96;
-  let s = `<circle cx="${cx}" cy="${cy}" r="${r}" fill="#11130c" stroke="#3d4230" stroke-width="3"/>`;
-  for (let d = 0; d < 360; d += 10) {
-    const big = d % 90 === 0, mid = d % 30 === 0;
-    const a = d * Math.PI / 180, l = big ? 16 : mid ? 10 : 5;
-    const x1 = cx + Math.sin(a) * r, y1 = cy - Math.cos(a) * r;
-    const x2 = cx + Math.sin(a) * (r - l), y2 = cy - Math.cos(a) * (r - l);
-    s += `<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="${big ? '#c9b77a' : '#6b6a55'}" stroke-width="${big ? 3 : 1.5}"/>`;
+// Mimics the in-game sight: heading tape on top (labels every 15°), RNG ladder on the left.
+function drawScope(brg, dist, bad) {
+  const has = brg !== null;
+  const hb = has ? brg : 0, rd = has ? dist : 300;
+  const mark = bad ? '#e0412f' : '#ffb627', ink = '#c9b77a', dim = '#6b6a55';
+  const cx = 220, cy = 190;
+  let s = `<defs><clipPath id="sc"><circle cx="${cx}" cy="150" r="148"/></clipPath></defs>`;
+  s += `<rect width="440" height="300" fill="#0b0c08" rx="8"/>`;
+  s += `<circle cx="${cx}" cy="150" r="148" fill="#1b1e14" stroke="#3d4230" stroke-width="3"/>`;
+  s += `<g clip-path="url(#sc)">`;
+
+  // heading tape
+  const ty = 78, ppd = 4.5;
+  for (let d = Math.floor(hb - 28); d <= Math.ceil(hb + 28); d++) {
+    const x = cx + (d - hb) * ppd;
+    const n = ((d % 360) + 360) % 360;
+    const h = n % 15 === 0 ? 14 : n % 5 === 0 ? 9 : 5;
+    s += `<line x1="${x}" y1="${ty}" x2="${x}" y2="${ty - h}" stroke="${n % 15 === 0 ? ink : dim}" stroke-width="${n % 15 === 0 ? 2 : 1}"/>`;
+    if (n % 15 === 0) s += `<text x="${x}" y="${ty - 20}" text-anchor="middle" font-size="13" fill="${ink}">${n}</text>`;
   }
-  T().cardinal.forEach((t, i) => {
-    const a = i * 90 * Math.PI / 180;
-    s += `<text x="${cx + Math.sin(a) * (r - 30)}" y="${cy - Math.cos(a) * (r - 30) + 6}" text-anchor="middle" font-size="18" font-weight="700" fill="${i === 0 ? '#e0412f' : '#c9b77a'}">${t}</text>`;
-  });
-  s += `<circle cx="${cx}" cy="${cy}" r="7" fill="#8fc23a"/>`;
-  if (brg !== null) {
-    const a = brg * Math.PI / 180;
-    const tx = cx + Math.sin(a) * (r - 14), ty = cy - Math.cos(a) * (r - 14);
-    s += `<line x1="${cx}" y1="${cy}" x2="${tx}" y2="${ty}" stroke="#ffb627" stroke-width="5" stroke-linecap="round"/>`;
-    s += `<circle cx="${tx}" cy="${ty}" r="9" fill="#e0412f" stroke="#16180f" stroke-width="2"/>`;
+  if (has) {
+    s += `<path d="M${cx - 8},${ty + 14} L${cx + 8},${ty + 14} L${cx},${ty + 4} Z" fill="${mark}"/>`;
+    s += `<rect x="${cx - 28}" y="${ty + 16}" width="56" height="22" rx="3" fill="none" stroke="${mark}" stroke-width="2"/>`;
+    s += `<text x="${cx}" y="${ty + 32}" text-anchor="middle" font-size="15" font-weight="700" fill="${mark}">${Math.round(brg)}°</text>`;
   }
-  $('compass').innerHTML = s;
+
+  // RNG ladder
+  const lx = 150, ppm = 0.7, span = 100;
+  s += `<line x1="${lx}" y1="${cy - span * ppm}" x2="${lx}" y2="${cy + span * ppm}" stroke="${dim}" stroke-width="1"/>`;
+  for (let m = Math.ceil((rd - span) / 10) * 10; m <= rd + span; m += 10) {
+    if (m < 0) continue;
+    const y = cy - (m - rd) * ppm, big = m % 50 === 0;
+    s += `<line x1="${lx}" y1="${y}" x2="${lx + (big ? 12 : 6)}" y2="${y}" stroke="${big ? ink : dim}" stroke-width="${big ? 2 : 1}"/>`;
+    if (big && !(has && Math.abs(m - rd) < 15)) s += `<text x="${lx - 6}" y="${y + 4}" text-anchor="end" font-size="12" fill="${ink}">${m}M</text>`;
+  }
+  s += `<text x="${lx}" y="${cy - span * ppm - 8}" text-anchor="middle" font-size="13" letter-spacing="2" fill="${ink}">RNG</text>`;
+  if (has) {
+    s += `<path d="M${lx + 2},${cy} L${lx + 14},${cy - 7} L${lx + 14},${cy + 7} Z" fill="${mark}"/>`;
+    s += `<line x1="${lx + 14}" y1="${cy}" x2="${cx - 32}" y2="${cy}" stroke="${mark}" stroke-width="1.5" stroke-dasharray="4 4"/>`;
+    s += `<rect x="${lx - 62}" y="${cy - 10}" width="58" height="20" rx="3" fill="#0b0c08" stroke="${mark}" stroke-width="1.5"/>`;
+    s += `<line x1="${lx - 4}" y1="${cy}" x2="${lx}" y2="${cy}" stroke="${mark}" stroke-width="2"/>`;
+    s += `<text x="${lx - 33}" y="${cy + 5}" text-anchor="middle" font-size="13" font-weight="700" fill="${mark}">${Math.round(dist)}M</text>`;
+  }
+
+  // reticle
+  s += `<path d="M${cx - 24},${cy - 22} h-6 v44 h6 M${cx + 24},${cy - 22} h6 v44 h-6" fill="none" stroke="${ink}" stroke-width="2"/>`;
+  s += `<circle cx="${cx}" cy="${cy}" r="4" fill="none" stroke="${ink}" stroke-width="1.5"/>`;
+  s += `<line x1="${cx}" y1="${cy - 50}" x2="${cx}" y2="${cy - 30}" stroke="${ink}" stroke-width="2"/><line x1="${cx - 10}" y1="${cy - 30}" x2="${cx + 10}" y2="${cy - 30}" stroke="${ink}" stroke-width="2"/>`;
+  s += `<line x1="${cx}" y1="${cy + 30}" x2="${cx}" y2="${cy + 50}" stroke="${ink}" stroke-width="2"/><line x1="${cx - 10}" y1="${cy + 30}" x2="${cx + 10}" y2="${cy + 30}" stroke="${ink}" stroke-width="2"/>`;
+  s += `</g>`;
+  $('scope').innerHTML = s;
 }
 
 function esc(s) { return String(s).replace(/[&<>"]/g, c => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;' })[c]); }
