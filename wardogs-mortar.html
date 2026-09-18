@@ -1,0 +1,387 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Wardogs Fire Control</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Black+Ops+One&family=Roboto+Condensed:wght@400;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg:#16180f; --panel:#22251a; --panel2:#2c3022; --line:#3d4230;
+    --text:#e9e4cf; --muted:#9a977f; --khaki:#c9b77a;
+    --amber:#ffb627; --red:#e0412f; --green:#8fc23a;
+  }
+  * { box-sizing:border-box; }
+  body {
+    margin:0; color:var(--text); font:16px/1.4 "Roboto Condensed", "Segoe UI", sans-serif;
+    background:var(--bg);
+    background-image:repeating-linear-gradient(0deg, transparent 0 39px, #ffffff08 39px 40px),
+                     repeating-linear-gradient(90deg, transparent 0 39px, #ffffff08 39px 40px);
+    padding:16px;
+  }
+  .wrap { max-width:720px; margin:0 auto; }
+  .stencil { font-family:"Black Ops One", Impact, sans-serif; letter-spacing:1px; font-weight:400; }
+  header { display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:14px; flex-wrap:wrap; }
+  header h1 { margin:0; font-size:26px; color:var(--khaki); }
+  header h1 span { color:var(--amber); }
+  .controls { display:flex; gap:10px; flex-wrap:wrap; }
+
+  .seg { display:flex; gap:6px; }
+  .seg button {
+    background:var(--panel); color:var(--muted); border:2px solid var(--line);
+    padding:8px 12px; border-radius:4px; cursor:pointer; font:700 14px "Roboto Condensed", sans-serif; text-transform:uppercase;
+  }
+  .seg button.on { color:#16180f; background:var(--khaki); border-color:var(--khaki); }
+
+  .step { background:var(--panel); border:2px solid var(--line); border-radius:6px; padding:14px 16px; margin-bottom:12px; }
+  .step h2 { margin:0 0 10px; font-size:18px; display:flex; align-items:center; gap:10px; }
+  .num {
+    display:inline-grid; place-items:center; width:30px; height:30px; border-radius:50%;
+    background:var(--amber); color:#16180f; font-size:16px; flex-shrink:0;
+  }
+  .hint { color:var(--muted); font-size:14px; margin:0 0 10px; }
+  .inputs { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+  .pt label { display:flex; align-items:center; gap:8px; font-weight:700; margin-bottom:6px; text-transform:uppercase; font-size:14px; }
+  .dot { width:14px; height:14px; border-radius:50%; flex-shrink:0; }
+  .pt input {
+    width:100%; padding:12px; font:700 22px "Roboto Condensed", monospace;
+    background:#11130c; color:var(--text); border:2px solid var(--line); border-radius:4px;
+  }
+  .pt input:focus { outline:none; border-color:var(--amber); }
+  .pt input.bad { border-color:var(--red); }
+  .pt .err { color:var(--red); font-size:13px; min-height:18px; margin-top:4px; }
+  .actions { display:flex; gap:8px; margin-top:6px; flex-wrap:wrap; }
+  .btn {
+    background:var(--panel2); color:var(--text); border:2px solid var(--line); border-radius:4px;
+    padding:8px 14px; font:700 14px "Roboto Condensed", sans-serif; cursor:pointer; text-transform:uppercase;
+  }
+  .btn:hover { border-color:var(--khaki); }
+  .btn.main { background:var(--amber); color:#16180f; border-color:var(--amber); }
+
+  .result { display:grid; grid-template-columns:230px 1fr; gap:18px; align-items:center; }
+  .order { display:flex; flex-direction:column; gap:14px; }
+  .order .lbl { color:var(--muted); font-size:14px; text-transform:uppercase; font-weight:700; }
+  .order .val { font-size:52px; line-height:1; color:var(--amber); }
+  .order .val small { font-size:24px; color:var(--khaki); margin-left:4px; }
+  .order .sub { color:var(--muted); font-size:14px; margin-top:4px; }
+  .status { padding:10px 12px; border-radius:4px; font-weight:700; font-size:15px; }
+  .status.ok { background:#8fc23a22; color:var(--green); border:1px solid #8fc23a66; }
+  .status.warn { background:#e0412f22; color:#ff7b6b; border:1px solid #e0412f88; }
+  .rangebar { position:relative; height:12px; background:#11130c; border:1px solid var(--line); border-radius:3px; margin-top:8px; }
+  .rangebar .zone { position:absolute; top:0; bottom:0; background:#8fc23a44; }
+  .rangebar .mark { position:absolute; top:-5px; width:4px; height:20px; background:var(--amber); border-radius:2px; transform:translateX(-2px); }
+  .rangelabels { display:flex; justify-content:space-between; color:var(--muted); font-size:12px; margin-top:3px; }
+  svg text { font-family:"Roboto Condensed", sans-serif; }
+
+  .hist { list-style:none; padding:0; margin:0; }
+  .hist li { display:flex; justify-content:space-between; gap:8px; padding:7px 0; border-bottom:1px solid var(--line); font-size:14px; cursor:pointer; }
+  .hist li:hover { color:var(--amber); }
+  .hist b { color:var(--amber); }
+  details { margin-top:10px; color:var(--muted); font-size:14px; }
+  summary { cursor:pointer; }
+  details label { display:flex; gap:8px; align-items:center; margin-top:8px; }
+
+  @media (max-width:620px) {
+    .inputs, .result { grid-template-columns:1fr; }
+    .compass { max-width:240px; margin:0 auto; }
+    .order .val { font-size:44px; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1 class="stencil">WARDOGS <span>FIRE CONTROL</span></h1>
+    <div class="controls">
+      <div class="seg" id="weapons">
+        <button data-w="mortar" class="on" data-i18n="wMortar"></button>
+        <button data-w="arty" data-i18n="wArty"></button>
+      </div>
+      <div class="seg" id="langs">
+        <button data-l="ru" class="on">RU</button>
+        <button data-l="en">EN</button>
+      </div>
+    </div>
+  </header>
+
+  <!-- STEP 1 -->
+  <section class="step">
+    <h2 class="stencil"><span class="num">1</span> <span data-i18n="s1"></span></h2>
+    <p class="hint" data-i18n="s1hint"></p>
+    <div class="inputs">
+      <div class="pt">
+        <label><span class="dot" style="background:var(--green)"></span> <span data-i18n="me"></span></label>
+        <input id="a" type="text" inputmode="decimal" autocomplete="off" placeholder="x98.43, y110.38">
+        <div class="err" id="aErr"></div>
+      </div>
+      <div class="pt">
+        <label><span class="dot" style="background:var(--red)"></span> <span data-i18n="target"></span></label>
+        <input id="b" type="text" inputmode="decimal" autocomplete="off" placeholder="x94.53, y109.03">
+        <div class="err" id="bErr"></div>
+      </div>
+    </div>
+    <div class="actions">
+      <button class="btn main" id="newTarget" data-i18n="newTarget"></button>
+      <button class="btn" id="swap" data-i18n="swap"></button>
+    </div>
+  </section>
+
+  <!-- STEP 2 -->
+  <section class="step">
+    <h2 class="stencil"><span class="num">2</span> <span data-i18n="s2"></span></h2>
+    <div class="result">
+      <svg class="compass" id="compass" viewBox="0 0 220 220"></svg>
+      <div class="order">
+        <div>
+          <div class="lbl" data-i18n="turnLbl"></div>
+          <div class="val stencil" id="brg">—</div>
+          <div class="sub" id="brgSub">&nbsp;</div>
+        </div>
+        <div>
+          <div class="lbl" data-i18n="rangeLbl"></div>
+          <div class="val stencil" id="dist">—</div>
+          <div class="rangebar" id="bar"><div class="zone" id="zone"></div><div class="mark" id="mark"></div></div>
+          <div class="rangelabels"><span>0</span><span id="barMax"></span></div>
+        </div>
+        <div class="status ok" id="status"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- STEP 3 -->
+  <section class="step">
+    <h2 class="stencil"><span class="num">3</span> <span data-i18n="s3"></span></h2>
+    <p class="hint" style="margin:0" data-i18n="s3hint"></p>
+  </section>
+
+  <section class="step">
+    <h2 class="stencil" style="font-size:16px"><span data-i18n="histTitle"></span> <span class="hint" style="margin:0;font-family:inherit;letter-spacing:0" data-i18n="histHint"></span></h2>
+    <ul class="hist" id="hist"></ul>
+    <details>
+      <summary data-i18n="settings"></summary>
+      <label><input type="checkbox" id="invY"> <span data-i18n="invY"></span></label>
+      <label><span data-i18n="mul"></span> <input type="number" id="mul" value="100" style="width:80px;background:#11130c;color:var(--text);border:1px solid var(--line);padding:4px"></label>
+    </details>
+  </section>
+</div>
+
+<script>
+const $ = id => document.getElementById(id);
+
+const I18N = {
+  ru: {
+    wMortar: 'Миномёт L81', wArty: 'Арта SPH-2',
+    s1: 'Вбей координаты',
+    s1hint: 'Открой карту → ПКМ по точке → скопируй цифры. Можно писать как угодно: <b>x98.43, y110.38</b> или просто <b>98.43 110.38</b>',
+    me: 'Где стоит миномёт (я)', target: 'Куда стрелять (цель)',
+    newTarget: 'Новая цель', swap: 'Поменять местами',
+    s2: 'Наводи вот так',
+    turnLbl: '↻ Повернись на (компас сверху экрана)',
+    rangeLbl: '↕ Дальность (W / S или мышкой)',
+    s3: 'Огонь!',
+    s3hint: 'Стреляй и смотри куда упало. Недолёт — добавь метров. Перелёт — убавь. Ушло вбок — подкрути поворот на пару градусов.',
+    histTitle: 'Прошлые цели', histHint: '(нажми, чтобы вернуть)',
+    histEmpty: 'Пока пусто — цели сохраняются сами при нажатии «Новая цель»',
+    settings: 'Настройки (трогать, только если стреляет не туда)',
+    invY: 'Снаряды летят зеркально по вертикали (ось Y вниз)',
+    mul: 'Метров в одной клетке координат:',
+    badInput: 'Не понял. Нужно два числа: X и Y',
+    needBoth: 'Вбей обе точки',
+    m: 'м', dirWord: 'Направление',
+    dirs: ['С (север)','СВ','В (восток)','ЮВ','Ю (юг)','ЮЗ','З (запад)','СЗ'],
+    cardinal: ['С','В','Ю','З'],
+    tooFar: (w, max, d) => `✖ Слишком далеко! ${w} бьёт максимум на ${max} м. Подойди ближе на ${d} м.`,
+    tooClose: (min, d) => `✖ Слишком близко! Минимум ${min} м. Отойди на ${d} м.`,
+    ok: (b, d) => `✔ Достаёт. Поверни на ${b}°, выставь ${d} м и стреляй.`,
+  },
+  en: {
+    wMortar: 'L81 Mortar', wArty: 'SPH-2 Artillery',
+    s1: 'Enter coordinates',
+    s1hint: 'Open the map → right-click a spot → copy the numbers. Any format works: <b>x98.43, y110.38</b> or just <b>98.43 110.38</b>',
+    me: 'Where the mortar is (me)', target: 'Where to shoot (target)',
+    newTarget: 'New target', swap: 'Swap',
+    s2: 'Aim like this',
+    turnLbl: '↻ Turn to (compass at top of screen)',
+    rangeLbl: '↕ Range (W / S or mouse)',
+    s3: 'Fire!',
+    s3hint: 'Shoot and watch where it lands. Short — add meters. Long — take some off. Off to the side — nudge the heading a couple of degrees.',
+    histTitle: 'Previous targets', histHint: '(click to restore)',
+    histEmpty: 'Empty for now — targets are saved when you press “New target”',
+    settings: 'Settings (only touch if shots go the wrong way)',
+    invY: 'Shells land mirrored vertically (Y axis points down)',
+    mul: 'Meters per coordinate unit:',
+    badInput: 'Can’t read that. Need two numbers: X and Y',
+    needBoth: 'Enter both points',
+    m: 'm', dirWord: 'Direction',
+    dirs: ['N (north)','NE','E (east)','SE','S (south)','SW','W (west)','NW'],
+    cardinal: ['N','E','S','W'],
+    tooFar: (w, max, d) => `✖ Too far! ${w} maxes out at ${max} m. Move ${d} m closer.`,
+    tooClose: (min, d) => `✖ Too close! Minimum is ${min} m. Back off ${d} m.`,
+    ok: (b, d) => `✔ In range. Turn to ${b}°, set ${d} m and fire.`,
+  },
+};
+
+const WEAPONS = {
+  mortar: { key:'wMortar', min:132, max:684 },
+  arty:   { key:'wArty', min:780, max:2629 },
+};
+
+const store = {
+  get(k, d) { try { const v = localStorage.getItem('wd_' + k); return v === null ? d : JSON.parse(v); } catch { return d; } },
+  set(k, v) { try { localStorage.setItem('wd_' + k, JSON.stringify(v)); } catch {} },
+};
+
+let lang = store.get('lang', 'ru');
+if (!I18N[lang]) lang = 'ru';
+let weapon = store.get('weapon', 'mortar');
+let last = null;
+const T = () => I18N[lang];
+
+function applyLang() {
+  document.documentElement.lang = lang;
+  document.querySelectorAll('[data-i18n]').forEach(el => { el.innerHTML = T()[el.dataset.i18n]; });
+  $('compass').setAttribute('aria-label', lang === 'ru' ? 'Компас' : 'Compass');
+  document.querySelectorAll('#langs button').forEach(b => b.classList.toggle('on', b.dataset.l === lang));
+  calc(); renderHist();
+}
+
+// Accepts "x98.43, y110.38", "98.43 110.38", "98,43 110,38", "98.43;110.38"
+function parse(s) {
+  s = s.trim().toLowerCase();
+  if (!s) return null;
+  const mx = s.match(/x\s*[:=]?\s*(-?\d+(?:[.,]\d+)?)/), my = s.match(/y\s*[:=]?\s*(-?\d+(?:[.,]\d+)?)/);
+  if (mx && my) return { x: +mx[1].replace(',', '.'), y: +my[1].replace(',', '.') };
+  let parts = s.split(/[\s;]+/).filter(Boolean);
+  if (parts.length === 1) {
+    const c = s.split(',');
+    if (c.length === 2) parts = c;
+    else if (c.length === 4) parts = [c[0] + '.' + c[1], c[2] + '.' + c[3]];
+  }
+  if (parts.length !== 2) return null;
+  const [sx, sy] = parts.map(p => p.replace(/[^\d.,-]/g, '').replace(',', '.'));
+  if (!/\d/.test(sx) || !/\d/.test(sy)) return null;
+  const x = +sx, y = +sy;
+  return isFinite(x) && isFinite(y) ? { x, y } : null;
+}
+
+function checkInput(id) {
+  const v = $(id).value, p = parse(v);
+  const bad = v.trim() !== '' && !p;
+  $(id).classList.toggle('bad', bad);
+  $(id + 'Err').textContent = bad ? T().badInput : '';
+  return p;
+}
+
+function calc() {
+  const A = checkInput('a'), B = checkInput('b');
+  store.set('a', $('a').value);
+  const W = WEAPONS[weapon], L = T();
+  $('barMax').textContent = W.max + ' ' + L.m;
+  $('zone').style.left = (W.min / W.max * 100) + '%';
+  $('zone').style.right = '0%';
+
+  if (!A || !B) {
+    last = null;
+    $('brg').textContent = '—'; $('dist').innerHTML = '—';
+    $('brgSub').innerHTML = '&nbsp;'; $('mark').style.display = 'none';
+    $('status').className = 'status ok'; $('status').textContent = L.needBoth;
+    drawCompass(null); return;
+  }
+  const mul = parseFloat($('mul').value) || 100;
+  const dx = B.x - A.x;
+  const dy = ($('invY').checked ? -1 : 1) * (B.y - A.y);
+  const dist = Math.hypot(dx, dy) * mul;
+  let brg = Math.atan2(dx, dy) * 180 / Math.PI;
+  if (brg < 0) brg += 360;
+  last = { dist, brg, a: $('a').value, b: $('b').value };
+  const rb = Math.round(brg), rd = Math.round(dist);
+
+  $('brg').innerHTML = rb + '<small>°</small>';
+  $('brgSub').textContent = L.dirWord + ': ' + L.dirs[Math.round(brg / 45) % 8] + ' · ' + Math.round(brg * 6400 / 360) + ' mil';
+  $('dist').innerHTML = rd + '<small>' + L.m + '</small>';
+  $('mark').style.display = 'block';
+  $('mark').style.left = Math.min(100, dist / W.max * 100) + '%';
+
+  const st = $('status');
+  if (dist > W.max) { st.className = 'status warn'; st.textContent = L.tooFar(L[W.key], W.max, Math.ceil(dist - W.max)); }
+  else if (dist < W.min) { st.className = 'status warn'; st.textContent = L.tooClose(W.min, Math.ceil(W.min - dist)); }
+  else { st.className = 'status ok'; st.textContent = L.ok(rb, rd); }
+  drawCompass(brg);
+}
+
+function drawCompass(brg) {
+  const cx = 110, cy = 110, r = 96;
+  let s = `<circle cx="${cx}" cy="${cy}" r="${r}" fill="#11130c" stroke="#3d4230" stroke-width="3"/>`;
+  for (let d = 0; d < 360; d += 10) {
+    const big = d % 90 === 0, mid = d % 30 === 0;
+    const a = d * Math.PI / 180, l = big ? 16 : mid ? 10 : 5;
+    const x1 = cx + Math.sin(a) * r, y1 = cy - Math.cos(a) * r;
+    const x2 = cx + Math.sin(a) * (r - l), y2 = cy - Math.cos(a) * (r - l);
+    s += `<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="${big ? '#c9b77a' : '#6b6a55'}" stroke-width="${big ? 3 : 1.5}"/>`;
+  }
+  T().cardinal.forEach((t, i) => {
+    const a = i * 90 * Math.PI / 180;
+    s += `<text x="${cx + Math.sin(a) * (r - 30)}" y="${cy - Math.cos(a) * (r - 30) + 6}" text-anchor="middle" font-size="18" font-weight="700" fill="${i === 0 ? '#e0412f' : '#c9b77a'}">${t}</text>`;
+  });
+  s += `<circle cx="${cx}" cy="${cy}" r="7" fill="#8fc23a"/>`;
+  if (brg !== null) {
+    const a = brg * Math.PI / 180;
+    const tx = cx + Math.sin(a) * (r - 14), ty = cy - Math.cos(a) * (r - 14);
+    s += `<line x1="${cx}" y1="${cy}" x2="${tx}" y2="${ty}" stroke="#ffb627" stroke-width="5" stroke-linecap="round"/>`;
+    s += `<circle cx="${tx}" cy="${ty}" r="9" fill="#e0412f" stroke="#16180f" stroke-width="2"/>`;
+  }
+  $('compass').innerHTML = s;
+}
+
+function esc(s) { return String(s).replace(/[&<>"]/g, c => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;' })[c]); }
+
+function renderHist() {
+  const h = store.get('hist', []), L = T();
+  $('hist').innerHTML = h.length
+    ? h.map((e, i) => `<li data-i="${i}"><span>${esc(e.b)}</span><span><b>${e.r}°</b> · <b>${e.d} ${L.m}</b></span></li>`).join('')
+    : `<li style="cursor:default;color:var(--muted)">${L.histEmpty}</li>`;
+}
+$('hist').onclick = e => {
+  const li = e.target.closest('li[data-i]'); if (!li) return;
+  const it = store.get('hist', [])[+li.dataset.i];
+  $('a').value = it.a; $('b').value = it.b; calc();
+};
+
+function saveCurrent() {
+  if (!last) return;
+  const h = store.get('hist', []).filter(e => !(e.a === last.a && e.b === last.b));
+  h.unshift({ a: last.a, b: last.b, d: Math.round(last.dist), r: Math.round(last.brg) });
+  store.set('hist', h.slice(0, 10));
+  renderHist();
+}
+
+$('newTarget').onclick = () => { saveCurrent(); $('b').value = ''; calc(); $('b').focus(); };
+$('swap').onclick = () => { [$('a').value, $('b').value] = [$('b').value, $('a').value]; calc(); };
+$('a').addEventListener('keydown', e => { if (e.key === 'Enter') $('b').focus(); });
+$('b').addEventListener('keydown', e => { if (e.key === 'Enter') { saveCurrent(); $('b').select(); } });
+
+document.querySelectorAll('#weapons button').forEach(b => {
+  b.classList.toggle('on', b.dataset.w === weapon);
+  b.onclick = () => {
+    weapon = b.dataset.w; store.set('weapon', weapon);
+    document.querySelectorAll('#weapons button').forEach(x => x.classList.toggle('on', x === b));
+    calc();
+  };
+});
+document.querySelectorAll('#langs button').forEach(b => {
+  b.onclick = () => { lang = b.dataset.l; store.set('lang', lang); applyLang(); };
+});
+
+$('invY').checked = store.get('invY', false);
+$('mul').value = store.get('mul', 100);
+$('invY').onchange = () => { store.set('invY', $('invY').checked); calc(); };
+$('mul').oninput = () => { store.set('mul', $('mul').value); calc(); };
+['a', 'b'].forEach(id => $(id).addEventListener('input', calc));
+
+$('a').value = store.get('a', 'x98.43, y110.38');
+if (!$('b').value) $('b').value = 'x94.53, y109.03';
+applyLang();
+</script>
+</body>
+</html>
