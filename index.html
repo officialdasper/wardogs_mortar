@@ -238,7 +238,8 @@ const store = {
   set(k, v) { try { localStorage.setItem('wd_' + k, JSON.stringify(v)); } catch {} },
 };
 
-let lang = store.get('lang', 'ru');
+const urlLang = new URLSearchParams(location.search).get('lang');
+let lang = I18N[urlLang] ? urlLang : store.get('lang', 'ru');
 if (!I18N[lang]) lang = 'ru';
 let weapon = store.get('weapon', 'mortar');
 let last = null;
@@ -334,7 +335,7 @@ function drawScope(brg, dist, bad) {
     const n = ((d % 360) + 360) % 360;
     const h = n % 15 === 0 ? 14 : n % 5 === 0 ? 9 : 5;
     s += `<line x1="${x}" y1="${ty}" x2="${x}" y2="${ty - h}" stroke="${n % 15 === 0 ? ink : dim}" stroke-width="${n % 15 === 0 ? 2 : 1}"/>`;
-    if (n % 15 === 0) s += `<text x="${x}" y="${ty - 20}" text-anchor="middle" font-size="13" fill="${ink}">${n}</text>`;
+    if (n % 15 === 0 && Math.abs(x - cx) < 110) s += `<text x="${x}" y="${ty - 20}" text-anchor="middle" font-size="13" fill="${ink}">${n}</text>`;
   }
   if (has) {
     s += `<path d="M${cx - 8},${ty + 14} L${cx + 8},${ty + 14} L${cx},${ty + 4} Z" fill="${mark}"/>`;
