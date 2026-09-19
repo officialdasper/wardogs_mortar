@@ -5,7 +5,7 @@
 **Калькулятор миномёта и артиллерии для [WARDOGS](https://store.steampowered.com/app/1867240/WARDOGS/)**
 **Mortar & artillery calculator for [WARDOGS](https://store.steampowered.com/app/1867240/WARDOGS/)**
 
-[![Open calculator](https://img.shields.io/badge/%F0%9F%8E%AF_%D0%9E%D0%A2%D0%9A%D0%A0%D0%AB%D0%A2%D0%AC-OPEN_CALCULATOR-ffb627?style=for-the-badge&labelColor=22251a)](https://officialdasper.github.io/wardogs_motar/)
+[![Open calculator](https://img.shields.io/badge/%F0%9F%8E%AF_%D0%9E%D0%A2%D0%9A%D0%A0%D0%AB%D0%A2%D0%AC-OPEN_CALCULATOR-ffb627?style=for-the-badge&labelColor=22251a)](https://officialdasper.github.io/wardogs_mortar/)
 
 [![Game](https://img.shields.io/badge/WARDOGS-Steam-1b2838?style=flat-square&logo=steam)](https://store.steampowered.com/app/1867240/WARDOGS/)
 ![Languages](https://img.shields.io/badge/lang-RU%20%7C%20EN-c9b77a?style=flat-square)
@@ -20,8 +20,8 @@
 <td align="center"><b>English</b></td>
 </tr>
 <tr>
-<td><a href="https://officialdasper.github.io/wardogs_motar/?lang=ru"><img src="docs/screenshot-ru.png" width="380" alt="Скриншот на русском"></a></td>
-<td><a href="https://officialdasper.github.io/wardogs_motar/?lang=en"><img src="docs/screenshot-en.png" width="380" alt="English screenshot"></a></td>
+<td><a href="https://officialdasper.github.io/wardogs_mortar/?lang=ru"><img src="docs/screenshot-ru.png" width="380" alt="Скриншот на русском"></a></td>
+<td><a href="https://officialdasper.github.io/wardogs_mortar/?lang=en"><img src="docs/screenshot-en.png" width="380" alt="English screenshot"></a></td>
 </tr>
 </table>
 
@@ -35,7 +35,7 @@
 
 ### ⚡ Как пользоваться
 
-1. **Открой** 👉 **[officialdasper.github.io/wardogs_motar](https://officialdasper.github.io/wardogs_motar/)** — ничего устанавливать не нужно.
+1. **Открой** 👉 **[officialdasper.github.io/wardogs_mortar](https://officialdasper.github.io/wardogs_mortar/)** — ничего устанавливать не нужно.
 2. В игре открой карту, **ПКМ по своей позиции** — скопируй координаты в поле «Где стоит миномёт».
 3. **ПКМ по цели** — координаты в поле «Куда стрелять».
 4. Выставь в прицеле **курс** (лента сверху) и **дальность RNG** (шкала слева, `W` / `S`) — схема прицела в калькуляторе показывает, как это должно выглядеть.
@@ -74,7 +74,7 @@ Enter your coordinates and the target's — get the **heading** and **range** to
 
 ### ⚡ How to use
 
-1. **Open** 👉 **[officialdasper.github.io/wardogs_motar/?lang=en](https://officialdasper.github.io/wardogs_motar/?lang=en)** — nothing to install.
+1. **Open** 👉 **[officialdasper.github.io/wardogs_mortar/?lang=en](https://officialdasper.github.io/wardogs_mortar/?lang=en)** — nothing to install.
 2. In game, open the map, **right-click your position** — paste the coordinates into "Where the mortar is".
 3. **Right-click the target** — paste into "Where to shoot".
 4. Set the **heading** (top tape) and **RNG** (left scale, `W` / `S`) in the sight — the sight diagram shows exactly how it should look.
